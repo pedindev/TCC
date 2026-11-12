@@ -1,0 +1,29 @@
+# Ambiente Python e arquivos gerados
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Configurações privadas e dados locais
+.env
+.env.*
+!.env.example
+*.sqlite3
+*.sqlite3-*
+.local/
+*.log
+
+# Sessões e arquivos temporários da automação
+playwright/.auth/
+test-results/
+playwright-report/
+downloads/
+uploads/
+
+# Arquivos do sistema operacional
+Thumbs.db
+.DS_Store

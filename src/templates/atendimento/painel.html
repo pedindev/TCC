@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Painel • MVP{% endblock %}
+{% block content %}
+<div class="titulo"><div><p class="eyebrow">APOIO AO OPERADOR</p>
+<h1>Atendimento</h1><p class="subtitulo">Consulte a encomenda, confira a orientação e prepare a mensagem.</p></div>
+<button id="novo" class="secundario" type="button" disabled>Novo atendimento</button></div>
+{% if modo == 'simulacao' %}
+<div class="modo">Simulação local · Use somente dados fictícios. Nenhum sistema externo é acessado.</div>
+<details class="testes"><summary>Códigos para testar</summary>
+<p>TESTE-COM · TESTE-SIM · TESTE-DIF · TESTE-NF · TESTE-IRF</p>
+<p>Recuperação: TESTE-LOGIN e TESTE-VAZIO (conclua o login fictício na outra janela).
+Exceções: TESTE-DESCONHECIDO, TESTE-LIBERADA, TESTE-CONEXAO e TESTE-DEMORA.</p></details>
+{% elif modo == 'preparacao' %}
+<div class="modo">Preparação · Integrações reais indisponíveis. Abra Iniciar atendimento na pasta do projeto.</div>
+{% else %}
+<p class="ajuda">Abra o SIAT e o WhatsApp normalmente no Chrome, inclusive em janelas diferentes. O programa verifica cada aba pelo Windows. Deixe apenas uma aba de cada sistema aberta.</p>
+<p class="modo"><strong>Ao consultar, aguarde sem usar mouse ou teclado.</strong> O sistema traz o SIAT para frente. Se for preciso renovar o login, você será avisado para entrar no próprio site.</p>
+{% endif %}
+<section class="sistemas" aria-label="Disponibilidade dos sistemas">
+  <div class="sistema"><span class="indicador" id="siat-indicador"></span><div>
+    <h2>SIAT Web</h2><p id="siat-status">Verificando conexão…</p></div></div>
+  <div class="sistema"><span class="indicador" id="whatsapp-indicador"></span><div>
+    <h2>WhatsApp Web</h2><p id="whatsapp-status">Verificando conexão…</p></div></div>
+</section>
+<section class="cartao" aria-labelledby="consulta-titulo">
+<h2 id="consulta-titulo"><span class="etapa">1</span> Consultar encomenda</h2>
+<form id="consulta" autocomplete="off">{% csrf_token %}
+  <label for="rastreio">Código de rastreio</label>
+  <div class="linha"><input id="rastreio" name="codigo" type="text" maxlength="64"
+    spellcheck="false" autocapitalize="characters" aria-describedby="rastreio-ajuda" required>
+    <button id="consultar" type="submit" disabled>Consultar</button></div>
+  <p id="rastreio-ajuda" class="ajuda">Cole o código recebido. Uma consulta por vez.</p>
+</form>
+<div id="andamento" class="andamento" role="status" aria-live="polite" aria-atomic="true">
+  <strong id="aviso">Conectando ao painel…</strong><p id="acao"></p>
+</div>
+<p id="erro-local" class="erro" role="alert" hidden></p>
+</section>
+<section id="etapa-resultado" class="cartao" aria-labelledby="resultado-titulo">
+<h2 id="resultado-titulo" tabindex="-1"><span class="etapa">2</span> Conferir resultado e orientação</h2>
+<dl class="resultado"><div><dt>Situação da encomenda</dt><dd id="situacao">Aguardando consulta</dd></div>
+<div><dt>Motivo da retenção</dt><dd id="motivo">—</dd></div></dl>
+<p id="catalogo-aviso" class="nota" hidden></p>
+<div id="opcoes-mensagens" hidden>
+<label for="mensagem-opcao">Escolha a orientação</label>
+<select id="mensagem-opcao" aria-describedby="mensagem-opcao-ajuda"></select>
+<p id="mensagem-opcao-ajuda" class="ajuda">Selecione a mensagem adequada à resposta do contribuinte. O botão do WhatsApp copia e cola somente o texto exibido abaixo.</p>
+</div>
+<label for="mensagem">Mensagem completa para conferência</label>
+<textarea id="mensagem" readonly rows="12" placeholder="A orientação aparecerá aqui após um resultado confirmado."></textarea>
+<p id="versao" class="ajuda"></p>
+<div class="rodape-mensagem"><div>
+<button id="colar" type="button" aria-describedby="colar-motivo" disabled>Colar no WhatsApp</button>
+<button id="cancelar" type="button" class="secundario" hidden>Cancelar colagem</button></div>
+<p>O botão copia esta mensagem. Você terá <strong>8 segundos</strong> para abrir a conversa certa e clicar no campo vazio; ao final, o sistema cola automaticamente.
+<strong>Confira o destinatário e pressione Enter para enviar.</strong></p></div>
+<p id="colar-motivo" class="ajuda" role="status" hidden></p>
+<p id="copia-status" class="ajuda" role="status" hidden></p>
+<p id="contagem" class="contagem" role="timer" hidden></p>
+</section>
+<noscript>Ative o JavaScript para consultar e acompanhar o atendimento.</noscript>
+{% endblock %}
+{% block scripts %}<script src="{% static 'painel.js' %}?v=20261112-mensagens" defer></script>{% endblock %}

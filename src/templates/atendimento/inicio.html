@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<p class="eyebrow">APOIO AO ATENDIMENTO</p>
+<h1>Base pronta para<br>começar o desenvolvimento.</h1>
+<p class="intro">O atendimento será conduzido pelo servidor, da consulta da mercadoria à conferência e autorização da mensagem.</p>
+<section class="grid" aria-label="Módulos do projeto">
+  <article><span class="numero">01</span><h2>Atendimento</h2><p>Organizar a consulta e a revisão pelo servidor.</p><span class="estado">Estrutura preparada</span></article>
+  <article><span class="numero">02</span><h2>Catálogo</h2><p>Reunir orientações aprovadas para cada situação.</p><span class="estado">Regras a validar</span></article>
+  <article><span class="numero">03</span><h2>Consulta SIAT</h2><p>Consultar informações pelas telas autorizadas.</p><span class="estado">Mapeamento pendente</span></article>
+  <article><span class="numero">04</span><h2>WhatsApp</h2><p>Enviar após conferência da mensagem e do destinatário.</p><span class="estado">Automação a analisar</span></article>
+</section>
+<section class="proximo"><div><h2>Próximo passo</h2><p>Definir uma categoria de demanda e demonstrar o caminho completo de consulta no SIAT.</p></div><a class="button" href="{% url 'painel' %}">Acessar painel</a></section>
+{% endblock %}

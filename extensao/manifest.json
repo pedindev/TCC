@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "MVP • Posto Fiscal dos Correios",
+  "version": "0.1.0",
+  "description": "Conecta individualmente as abas do SIAT e WhatsApp ao painel local. Nunca envia mensagens.",
+  "permissions": ["scripting", "storage"],
+  "host_permissions": [
+    "https://webas.sefaz.pi.gov.br/*",
+    "http://webas.sefaz.pi.gov.br/*",
+    "https://web.whatsapp.com/*",
+    "http://127.0.0.1/*",
+    "http://localhost/*"
+  ],
+  "background": {"service_worker": "background.js"},
+  "content_scripts": [{
+    "matches": ["http://127.0.0.1/*", "http://localhost/*"],
+    "js": ["painel.js"],
+    "run_at": "document_idle"
+  }]
+}

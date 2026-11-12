@@ -1,0 +1,21 @@
+{% load static %}
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}MVP • Posto Fiscal dos Correios{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'painel.css' %}">
+</head>
+<body>
+  <header>
+    <a class="marca" href="{% url 'inicio' %}">MVP <span>Posto Fiscal dos Correios</span></a>
+    <span class="local">Atendimento local · envio manual</span>
+  </header>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+  <footer>Posto Fiscal dos Correios · O operador confere o destinatário e envia a mensagem.</footer>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
