@@ -13,6 +13,7 @@ from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import TimeoutError as PlaywrightTimeout
 
 from apps.atendimento.erros import Cancelado, FalhaOperacao
+from apps.atendimento.simulacao import TEXTO_TESTE_COM
 from apps.catalogo.service import preparar_orientacao
 from apps.siat.consulta import FalhaPesquisaSiat, TempoPesquisaExcedido
 from apps.siat.estado import LoginSiatNecessario, TelaConsultaIndisponivel
@@ -105,14 +106,18 @@ class FluxoOperador:
             )
 
     def consultar(self, atendimento, token, codigo):
+        if isinstance(codigo, str):
+            codigo = "".join(
+                c for c in codigo if not c.isspace() and c not in "\u200b\ufeff"
+            ).upper()
         if (
             not isinstance(codigo, str)
-            or not 1 <= len(codigo.strip()) <= 64
-            or any(c.isspace() or ord(c) < 32 for c in codigo.strip())
+            or not 1 <= len(codigo) <= 64
+            or any(ord(c) < 32 for c in codigo)
         ):
             raise FalhaOperacao(
                 "codigo_invalido",
-                "Informe um código de rastreio sem espaços.",
+                "Informe um código de rastreio válido, com até 64 caracteres.",
                 "Confira o código recebido e cole novamente.",
             )
         with self.lock:
@@ -134,13 +139,13 @@ class FluxoOperador:
             self.estado.update(
                 token=uuid.uuid4().hex,
                 fase="consultando",
-                rastreio=codigo.strip(),
+                rastreio=codigo,
                 aviso="Consultando no SIAT. Aguarde.",
                 acao="",
                 erro="",
             )
             self.ultima_atividade = time.monotonic()
-            self.fila.put_nowait(("consultar", atendimento, codigo.strip()))
+            self.fila.put_nowait(("consultar", atendimento, codigo))
 
     def colar(self, atendimento, token):
         with self.lock:
@@ -313,7 +318,7 @@ class FluxoOperador:
                             if resultado.situacao == "retida" and resultado.motivo not in MOTIVOS:
                                 raise FalhaOperacao("orientacao_indisponivel", "", "")
                             orientacao = catalogo_executor.submit(
-                                self._carregar_orientacao, resultado
+                                self._carregar_orientacao, resultado, valor
                             ).result(timeout=5)
                         except FalhaOperacao as erro:
                             if (
@@ -435,7 +440,9 @@ class FluxoOperador:
             catalogo_executor.shutdown(wait=False, cancel_futures=True)
             navegador.fechar()
 
-    def _carregar_orientacao(self, resultado):
+    def _carregar_orientacao(self, resultado, codigo):
+        if self.modo == "simulacao" and codigo == "TESTE-COM":
+            return {"texto": TEXTO_TESTE_COM, "versao": "", "aviso": "", "pode_colar": True}
         # Django ORM não deve executar na thread que mantém o event loop do Playwright.
         close_old_connections()
         try:

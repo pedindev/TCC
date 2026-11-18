@@ -43,6 +43,8 @@ class RetornoPainelBrowserCheck(SimpleTestCase):
                 contexto.route("**/*", rota)
                 siat = contexto.new_page()
                 siat.goto("https://webas.sefaz.pi.gov.br/siatweb/faces/index.xhtml")
+                painel_inicial = contexto.new_page()
+                painel_inicial.goto("http://127.0.0.1:8000/")
                 with ThreadPoolExecutor(max_workers=1) as executor:
 
                     def chamar(acao, referencia=""):
@@ -53,6 +55,7 @@ class RetornoPainelBrowserCheck(SimpleTestCase):
                         return futuro.result(timeout=1)
 
                     referencia = chamar("status")["siat"]["referencia"]
+                    painel_inicial.close()
                     for separado, caminho, titulo in (
                         (False, "/", "Painel • MVP"),
                         (False, "/painel/", "Uso da memória em Painel • MVP: 20 MB"),

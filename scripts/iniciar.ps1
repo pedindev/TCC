@@ -16,7 +16,7 @@ try {
     & $projectPython manage.py check
     if ($LASTEXITCODE -ne 0) { throw "Corrija a configuracao antes de iniciar." }
     if ($Modo -eq 'navegador') {
-        Write-Host 'O painel verifica separadamente as abas do Chrome pelo Windows.'
+        Write-Host 'O painel identifica o navegador em que foi aberto e verifica suas abas pelo Windows.'
         Write-Host 'Ao consultar, aguarde sem usar mouse ou teclado. O SIAT sera trazido para frente.'
         Write-Host 'Nenhum navegador ou site sera aberto automaticamente.'
         Write-Host 'Painel: http://127.0.0.1:8000/'

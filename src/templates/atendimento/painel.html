@@ -14,7 +14,7 @@ Exceções: TESTE-DESCONHECIDO, TESTE-LIBERADA, TESTE-CONEXAO e TESTE-DEMORA.</p
 {% elif modo == 'preparacao' %}
 <div class="modo">Preparação · Integrações reais indisponíveis. Abra Iniciar atendimento na pasta do projeto.</div>
 {% else %}
-<p class="ajuda">Abra o SIAT e o WhatsApp normalmente no Chrome, inclusive em janelas diferentes. O programa verifica cada aba pelo Windows. Deixe apenas uma aba de cada sistema aberta.</p>
+<p class="ajuda">Abra o SIAT e o WhatsApp no mesmo navegador em que este painel está aberto, inclusive em janelas diferentes. O programa identifica esse navegador e verifica suas abas pelo Windows. Deixe apenas uma aba de cada sistema aberta.</p>
 <p class="modo"><strong>Ao consultar, aguarde sem usar mouse ou teclado.</strong> O sistema traz o SIAT para frente. Se for preciso renovar o login, você será avisado para entrar no próprio site.</p>
 {% endif %}
 <section class="sistemas" aria-label="Disponibilidade dos sistemas">
@@ -30,7 +30,7 @@ Exceções: TESTE-DESCONHECIDO, TESTE-LIBERADA, TESTE-CONEXAO e TESTE-DEMORA.</p
   <div class="linha"><input id="rastreio" name="codigo" type="text" maxlength="64"
     spellcheck="false" autocapitalize="characters" aria-describedby="rastreio-ajuda" required>
     <button id="consultar" type="submit" disabled>Consultar</button></div>
-  <p id="rastreio-ajuda" class="ajuda">Cole o código recebido. Uma consulta por vez.</p>
+  <p id="rastreio-ajuda" class="ajuda">Ao colar, as letras ficam maiúsculas e os espaços são removidos. Uma consulta por vez.</p>
 </form>
 <div id="andamento" class="andamento" role="status" aria-live="polite" aria-atomic="true">
   <strong id="aviso">Conectando ao painel…</strong><p id="acao"></p>
@@ -61,4 +61,4 @@ Exceções: TESTE-DESCONHECIDO, TESTE-LIBERADA, TESTE-CONEXAO e TESTE-DEMORA.</p
 </section>
 <noscript>Ative o JavaScript para consultar e acompanhar o atendimento.</noscript>
 {% endblock %}
-{% block scripts %}<script src="{% static 'painel.js' %}?v=20261112-mensagens" defer></script>{% endblock %}
+{% block scripts %}<script src="{% static 'painel.js' %}?v=20261113-rastreio" defer></script>{% endblock %}

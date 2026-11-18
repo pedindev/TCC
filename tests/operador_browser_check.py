@@ -97,16 +97,21 @@ class OperadorBrowserCheck(StaticLiveServerTestCase):
         expect(self.page.locator("#mensagem")).to_have_value("")
         expect(self.page.locator("#rastreio")).to_be_enabled(timeout=10000)
 
-    def test_consulta_catalogo_contagem_colagem_sem_enter_e_novo(self):
+    def test_consulta_comercializacao_contagem_colagem_sem_enter_e_novo(self):
         self.consultar("TESTE-COM")
         expect(self.page.locator("#situacao")).to_have_text("Retida", timeout=15000)
         expect(self.page.locator("#motivo")).to_have_text("Comercialização")
         self.assertEqual(self.erros_catalogo, [])
-        expect(self.page.locator("#colar")).to_be_enabled(timeout=10000)
-        texto = self.page.locator("#mensagem").input_value()
-        self.assertIn("habitualidade", texto)
-        self.assertIn("https://portal.sefaz.pi.gov.br/acompanhe-sua-solicitacao", texto)
-        self.assertTrue(texto.startswith("[SIMULAÇÃO"))
+        campo = self.page.get_by_label("Mensagem completa para conferência", exact=True)
+        texto = (
+            "SIMULAÇÃO COM DADOS FICTÍCIOS\n\n"
+            "Sua encomenda foi retida porque a fiscalização identificou indícios de que "
+            "os produtos foram comprados para revenda."
+        )
+        expect(campo).to_have_value(texto)
+        colar = self.page.get_by_role("button", name="Colar no WhatsApp", exact=True)
+        expect(colar).to_be_visible()
+        expect(colar).to_be_enabled(timeout=10000)
         self.page.reload()
         expect(self.page.locator("#mensagem")).to_have_value(texto)
         expect(self.page.locator("#consultar")).to_be_disabled()
@@ -114,8 +119,13 @@ class OperadorBrowserCheck(StaticLiveServerTestCase):
         saida = Path(settings.BASE_DIR) / ".local/validacao/painel-ficticio.png"
         saida.parent.mkdir(parents=True, exist_ok=True)
         self.page.screenshot(path=str(saida), full_page=True)
-        self.page.locator("#colar").click()
+        # Exercita a colagem sem acessar a área de transferência do Windows.
+        self.page.evaluate("""() => Object.defineProperty(navigator.clipboard, 'writeText', {
+            value: async (texto) => { window.textoCopiado = texto; },
+        })""")
+        colar.click()
         expect(self.page.locator("#contagem")).to_be_visible()
+        self.assertEqual(self.page.evaluate("window.textoCopiado"), texto)
         self.comandos.put("focar")
         expect(self.page.locator("#aviso")).to_have_text(
             "Texto colado. O envio é manual.", timeout=15000
@@ -164,6 +174,9 @@ class OperadorBrowserCheck(StaticLiveServerTestCase):
         expect(self.page.locator("#consultar")).to_be_disabled()
         self.comandos.put("login")
         expect(self.page.locator("#colar")).to_be_enabled(timeout=15000)
+        texto = self.page.locator("#mensagem").input_value()
+        self.assertTrue(texto.startswith("[SIMULAÇÃO"))
+        self.assertIn("https://portal.sefaz.pi.gov.br/acompanhe-sua-solicitacao", texto)
         self.novo()
         self.consultar("TESTE-VAZIO")
         expect(self.page.locator("#aviso")).to_contain_text("Faça login", timeout=15000)

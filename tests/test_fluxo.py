@@ -126,7 +126,7 @@ class FluxoTests(SimpleTestCase):
 
     def iniciar(self):
         s = self.fluxo.snapshot()
-        self.fluxo.consultar(s["atendimento"], s["token"], "TESTE-COM")
+        self.fluxo.consultar(s["atendimento"], s["token"], "TESTE-LOGIN")
         return s
 
     def pronto(self):

@@ -6,7 +6,7 @@ Inicialização do operador: `Iniciar atendimento.cmd` usa o modo navegador real
 O painel monitora as abas existentes de SIAT e WhatsApp, inclusive em janelas
 diferentes do navegador conectado. Não abre sites nem navegador ao iniciar e
 não exige abrir os sistemas por links do painel. Os logins continuam manuais.
-O verificador local acessa os controles do Chrome pelo Windows, sem extensão.
+O verificador local identifica o navegador pela aba do painel e acessa seus controles pelo Windows, sem extensão. SIAT e WhatsApp devem estar nesse navegador; outras janelas do mesmo processo são aceitas.
 Na consulta, traz o SIAT para frente; o operador aguarda sem usar mouse ou teclado.
 Testes fictícios
 permanecem separados da operação e não substituem a validação dos experimentos reais.

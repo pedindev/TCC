@@ -103,6 +103,8 @@ class DesktopBrowserCheck(SimpleTestCase):
                 wa.goto("https://web.whatsapp.com/")
                 siat = contexto.new_page()
                 siat.goto(SIAT + "index.xhtml")
+                painel_inicial = contexto.new_page()
+                painel_inicial.goto("http://127.0.0.1:8000/")
                 with ThreadPoolExecutor(max_workers=1) as executor:
 
                     def chamar(acao, referencia="", valor=""):
@@ -135,6 +137,7 @@ class DesktopBrowserCheck(SimpleTestCase):
                     # Login manual fictício; o helper não preenche credenciais.
                     siat.get_by_text("Login fictício").click()
                     siat.goto(SIAT + "resultado.xhtml")
+                    painel_inicial.close()
                     painel = contexto.new_page()
                     painel.goto("http://127.0.0.1:8000/")
                     painel.bring_to_front()

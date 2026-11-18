@@ -18,7 +18,7 @@ try {
     & $projectPython manage.py test tests --verbosity 2
     if ($LASTEXITCODE -ne 0) { throw "Falha nos testes da base." }
     if ($ComNavegador) {
-        & $projectPython manage.py test tests.browser_check tests.siat_browser_check tests.operador_browser_check tests.whatsapp_browser_check tests.desktop_browser_check tests.whatsapp_desktop_browser_check tests.siat_desktop_dialog_check tests.retorno_painel_browser_check tests.painel_resultado_browser_check --verbosity 2
+        & $projectPython manage.py test tests.browser_check tests.siat_browser_check tests.operador_browser_check tests.whatsapp_browser_check tests.desktop_browser_check tests.whatsapp_desktop_browser_check tests.siat_desktop_dialog_check tests.retorno_painel_browser_check tests.painel_resultado_browser_check tests.navegador_painel_browser_check --verbosity 2
         if ($LASTEXITCODE -ne 0) { throw "Falha no teste local com Chromium." }
     }
     Write-Host "Verificacao concluida. Estes testes nao comprovam o funcionamento das integracoes reais."

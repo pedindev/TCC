@@ -190,7 +190,32 @@
       botoes();
     }
   }
-  el('consulta').addEventListener('submit', e => {e.preventDefault(); comando('consultar', {codigo: el('rastreio').value.trim()});});
+  const normalizarRastreio = texto => texto.replace(/[\s\u0085\u001c-\u001f\u200b]/gu, '').toUpperCase();
+  function ajustarRastreio() {
+    const campo = el('rastreio');
+    const anterior = campo.value;
+    const inicio = normalizarRastreio(anterior.slice(0, campo.selectionStart)).length;
+    const fim = normalizarRastreio(anterior.slice(0, campo.selectionEnd)).length;
+    campo.value = normalizarRastreio(anterior);
+    campo.setSelectionRange(inicio, fim);
+    campo.setCustomValidity(campo.value.length > 64 ? 'O código deve ter até 64 caracteres.' : '');
+  }
+  el('rastreio').addEventListener('input', ajustarRastreio);
+  el('rastreio').addEventListener('paste', e => {
+    if (!e.clipboardData) return;
+    e.preventDefault();
+    const campo = el('rastreio');
+    // Limpa antes de inserir, para os espaços não consumirem o limite do campo.
+    // Preserva a parte fora da seleção e nunca corta um código longo silenciosamente.
+    campo.setRangeText(normalizarRastreio(e.clipboardData.getData('text/plain')),
+      campo.selectionStart, campo.selectionEnd, 'end');
+    ajustarRastreio();
+  });
+  el('consulta').addEventListener('submit', e => {
+    e.preventDefault();
+    ajustarRastreio();
+    if (el('rastreio').reportValidity()) comando('consultar', {codigo: el('rastreio').value});
+  });
   el('novo').addEventListener('click', () => comando('novo'));
   el('colar').addEventListener('click', copiarEColar);
   el('cancelar').addEventListener('click', () => comando('cancelar'));

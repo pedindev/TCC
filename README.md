@@ -1,83 +1,88 @@
 # MVP de atendimento — Posto Fiscal dos Correios
 
-Atualização: 10/11/2026. Painel local único, sem contas ou administração de usuários.
-A regra do WhatsApp é **colagem automática e envio manual**. O programa não seleciona
-um destinatário, não pressiona Enter, não clica em Enviar e não declara envio ou entrega.
+Protótipo do TCC de Pedro Augusto da Silva Figueiredo. O painel roda no próprio
+computador e apoia a consulta de encomendas e a seleção de orientações para o
+contribuinte. No WhatsApp, a **colagem é automática e o envio é manual**.
 
-## Executar e testar
+## Preparar o ambiente
 
-**Inicialização normal:** abra `Iniciar atendimento.cmd` com dois cliques na pasta
-do projeto. Ele inicia apenas o servidor do painel e conecta ao navegador já disponível.
-Não abre navegador, painel, SIAT ou WhatsApp automaticamente. Abra
-[o painel](http://127.0.0.1:8000/) quando desejar; ele acompanha as abas existentes.
-SIAT e WhatsApp podem estar em janelas diferentes do navegador conectado.
-Não é necessário abrir os sites pelos links do painel nem abri-los junto com o sistema.
-`scripts/iniciar.ps1` também usa navegador como padrão.
-Se existir um servidor anterior, pare-o com Ctrl+C antes de abrir o atalho.
-A inicialização recusa uma segunda instância na mesma porta.
+Você precisa de **Windows 10 ou 11**, **Windows PowerShell** e **Python 3.12**.
+No GitHub, escolha **Code → Download ZIP**, extraia o arquivo e abra o PowerShell
+na pasta que contém `manage.py`. Se tiver o Git instalado, também pode clonar o repositório.
 
-O verificador local usa UI Automation do Windows para localizar cada aba a cada
-três segundos, sem trocar o foco durante a observação. Distingue aba ausente,
-duplicada e localizada; não confunde título de aba com login confirmado.
-Confere os controles do SIAT quando sua página está selecionada e acessível.
-O painel consulta o estado uma vez por segundo quando ocioso, a cada
-meio segundo durante operações e a cada três segundos quando oculto e ocioso.
-Não há requisições sobrepostas; ao voltar à aba, solicita atualização imediatamente.
-
-O leitor Windows de Inf. Adicionais foi implementado a partir do HTML fornecido,
-mas sua compatibilidade com a árvore acessível real ainda precisa ser validada. O campo real de
-composição do WhatsApp também precisa ser confirmado antes de habilitar colagem.
-
-### Testes de desenvolvimento (opcionais)
-
-No PowerShell, em `D:\TCC\projeto\desenvolvimento`:
+Rode uma vez, com acesso à internet:
 
 ```powershell
-.\scripts\iniciar.ps1 -Modo simulacao
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\preparar.ps1
 ```
 
-Abra [o painel](http://127.0.0.1:8000/painel/). O modo de simulação abre uma janela
-Chromium com SIAT e WhatsApp **fictícios**. Todas as requisições dessas páginas são
-interceptadas; nenhum sistema externo recebe os códigos. Não informe dados reais.
-As dependências e o navegador já instalados são reaproveitados.
+O script instala as dependências e o Chromium para a simulação, cria a configuração
+local e prepara o catálogo de orientações. Para preparar somente o modo normal,
+adicione `-SemNavegador` ao comando.
 
-1. Cole `TESTE-COM` e clique em **Consultar**.
-2. Confira a situação, o motivo e a mensagem completa do catálogo, com os links.
-3. Clique em **Colar no WhatsApp**. Em oito segundos, vá à janela fictícia,
-   abra a aba WhatsApp e clique no campo de mensagem vazio.
-4. O texto aparece no campo. Não há envio automático. Na operação real, o operador
-   confere o destinatário e a mensagem e pressiona Enter.
-5. **Novo atendimento** limpa o rastreio, o resultado e a orientação no painel.
-   Não apaga texto já colado no navegador: esse conteúdo deve ser conferido pelo operador.
+## Modo simulação — demonstração para a orientadora
 
-A contagem pode ser cancelada. Se o campo não estiver vazio e selecionado, a colagem
-é recusada. Se houver falha depois de iniciá-la, o painel pede conferência manual,
-sem repetir automaticamente a tentativa. Uma operação por vez, inclusive entre abas.
+Rode no PowerShell, na pasta do projeto:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\iniciar.ps1 -Modo simulacao
+```
+
+1. Abra o [painel local](http://127.0.0.1:8000/painel/) no navegador. A simulação abre
+   uma janela Chromium com as páginas fictícias do SIAT e do WhatsApp. Use somente os
+   códigos de teste abaixo. A demonstração dispensa contas institucionais.
+2. Digite `TESTE-COM` e clique em **Consultar**. A situação será **Retida**, o motivo
+   será **Comercialização** e a mensagem aparecerá identificada como simulação.
+3. Para demonstrar a colagem, clique em **Colar no WhatsApp**. Durante os oito segundos
+   de contagem, vá até o WhatsApp fictício e clique no campo vazio da mensagem. Ao final,
+   o sistema cola a orientação. Para testar outro código, clique em **Novo atendimento**.
 
 | Código fictício | Cenário |
 | --- | --- |
-| TESTE-COM, TESTE-SIM, TESTE-DIF, TESTE-NF, TESTE-IRF | Cinco motivos e textos correspondentes |
-| TESTE-LOGIN | Resultado vazio, saída e login manual; depois consulta confirmada |
-| TESTE-VAZIO | Continua vazio após o login: situação não confirmada |
-| TESTE-DESCONHECIDO | Retenção confirmada com motivo não mapeado |
-| TESTE-LIBERADA | Situação fictícia liberada, mas sem texto no catálogo para essa situação |
-| TESTE-CONEXAO, TESTE-DEMORA | Falha de conexão e demora simuladas |
+| `TESTE-COM` | Comercialização com mensagem fictícia curta para captura |
+| `TESTE-SIM`, `TESTE-DIF`, `TESTE-NF`, `TESTE-IRF` | SIMEI, e-commerce/DIFAL, sem nota fiscal e irregularidades fiscais |
+| `TESTE-LOGIN` | Resultado vazio, saída e novo login; a consulta seguinte é confirmada |
+| `TESTE-VAZIO` | Resultado vazio mesmo após o novo login |
+| `TESTE-DESCONHECIDO` | Retenção confirmada com motivo não mapeado |
+| `TESTE-LIBERADA` | Situação fictícia liberada, sem texto correspondente no catálogo |
+| `TESTE-CONEXAO`, `TESTE-DEMORA` | Falha de conexão e demora simuladas |
 
-Nos cenários de login, vá à aba SIAT fictícia e clique em **Concluir login fictício**.
-Não há campos de credenciais. As mensagens coladas em simulação recebem um aviso
-explícito de dados fictícios. Isso não altera os textos nem o estado de revisão do banco.
+Para `TESTE-LOGIN` e `TESTE-VAZIO`, clique em **Concluir login fictício** na aba do SIAT
+quando o painel pedir novo login. Use `Ctrl+C` no PowerShell para encerrar o servidor
+e a janela fictícia antes de trocar de modo.
 
-`-Modo preparacao` abre somente o painel, com conexões indisponíveis. Sem `-Modo`,
-o script usa navegador real. Simulação exige seleção explícita, apenas para testes.
-Pare o servidor com Ctrl+C; a janela fictícia é encerrada.
+## Modo normal — atendimento com os sistemas reais
+
+1. Rode o comando abaixo ou execute `Iniciar atendimento.cmd` com dois cliques.
+2. Abra o [painel local](http://127.0.0.1:8000/painel/), uma aba do SIAT Web e uma aba
+   do WhatsApp Web no mesmo navegador. As abas podem ficar em janelas diferentes.
+   Entre manualmente nos sistemas com os acessos institucionais autorizados.
+3. Digite o código de rastreio no painel e clique em **Consultar**. Aguarde o resultado
+   sem usar o mouse ou o teclado enquanto o sistema opera a interface do SIAT.
+4. Confira a orientação. Se for utilizá-la, clique em **Colar no WhatsApp** e, durante
+   a contagem, abra a conversa certa e clique no campo vazio. Depois da colagem,
+   confira o destinatário e a mensagem e pressione **Enter** para enviar.
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\iniciar.ps1 -Modo navegador
+```
+
+Se o SIAT pedir novo login, entre pelo navegador e aguarde a retomada da consulta.
+Mantenha a janela desbloqueada e use o mesmo usuário do Windows para o servidor e
+o navegador. Para trocar de modo, encerre o servidor atual com `Ctrl+C`.
 
 ## Conexão ao navegador de atendimento
 
 O modo `navegador` usa **o verificador local do Windows**, integrado ao programa.
-O operador abre o Chrome, SIAT e WhatsApp normalmente e inicia o painel pelo atalho.
+O operador abre o painel, SIAT e WhatsApp no navegador que escolheu e inicia o programa pelo atalho.
 Não precisa de extensão, modo desenvolvedor, porta CDP ou perfil separado.
-Suporte esperado: Windows 10/11, Windows PowerShell 5.1/.NET Framework e Chrome
-atualizado com UI Automation nativa (Chrome 138+). Brave também é reconhecido.
+O detector identifica o processo pela aba visível do painel e seu endereço local;
+não filtra marcas ou nomes de executáveis. Procura as abas nas janelas desse processo,
+sem misturar sites abertos em outro navegador. Na primeira identificação, mantenha
+o painel visível. Se o painel fechar, o vínculo é descartado.
+A automação depende de controles acessíveis por UI Automation no Windows 10/11 e
+Windows PowerShell 5.1/.NET Framework. Detectar o navegador não comprova compatibilidade
+de todos os seus controles: quando não consegue identificá-los, pede conferência.
 Não é necessário instalar outro pacote Python nem baixar outro navegador para operar.
 
 Deixe uma aba de cada sistema, inclusive em janelas diferentes. O monitor não ativa
@@ -85,12 +90,7 @@ abas enquanto o operador trabalha. Ao clicar **Consultar**, o painel avisa para
 aguardar sem usar mouse ou teclado e o programa traz o SIAT para frente. Se o Windows
 recusar o foco ou a tela mudar, o programa interrompe com orientação de conferência.
 O computador deve estar desbloqueado; os programas devem rodar no mesmo usuário,
-sem iniciar o Chrome como administrador. O login continua manual.
-
-```powershell
-Set-Location 'D:\TCC\projeto\desenvolvimento'
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\iniciar.ps1
-```
+sem iniciar o navegador como administrador. O login continua manual.
 
 O script inicia somente o servidor e seu componente local, oculto, de acessibilidade.
 Abra [o painel](http://127.0.0.1:8000/). Os adaptadores anteriores de extensão e CDP
@@ -277,8 +277,7 @@ e colagem. Capturas geradas pelos testes em `.local/validacao` contêm somente d
 fictícios. Não há capturas, traces, vídeos ou logs de páginas reais na aplicação.
 
 Detalhes de escopo: [REQUISITOS.md](REQUISITOS.md), [SIAT.md](SIAT.md) e
-[MENSAGENS.md](MENSAGENS.md). Instalação em outro computador: `scripts/preparar.ps1`.
-Esse script instala dependências e Chromium; não é necessário repeti-lo neste computador.
+[MENSAGENS.md](MENSAGENS.md).
 
 Referências técnicas: [UI Automation nativa do Chrome](https://developer.chrome.com/blog/windows-uia-support-update),
 [padrões de controles Windows](https://learn.microsoft.com/en-us/dotnet/framework/ui-automation/ui-automation-control-patterns-for-clients)

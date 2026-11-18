@@ -49,11 +49,18 @@ class SiatDesktopDialogCheck(SimpleTestCase):
                 def rota(r):
                     if r.request.url.startswith("https://webas.sefaz.pi.gov.br/siatweb/"):
                         return r.fulfill(content_type="text/html; charset=utf-8", body=HTML)
+                    if r.request.url == "http://127.0.0.1:8000/":
+                        return r.fulfill(
+                            content_type="text/html; charset=utf-8",
+                            body="<title>Painel • MVP</title>",
+                        )
                     return r.abort()
 
                 contexto.route("**/*", rota)
                 page = contexto.new_page()
                 page.goto("https://webas.sefaz.pi.gov.br/siatweb/faces/index.xhtml")
+                painel = contexto.new_page()
+                painel.goto("http://127.0.0.1:8000/")
                 with ThreadPoolExecutor(max_workers=1) as executor:
 
                     def chamar(acao, referencia="", valor=""):
@@ -63,6 +70,8 @@ class SiatDesktopDialogCheck(SimpleTestCase):
                             page.wait_for_timeout(50)
                         return futuro.result(timeout=1)
 
+                    chamar("status")
+                    page.bring_to_front()
                     estado = chamar("status")["siat"]
                     self.assertEqual(estado["estado"], "detalhes")
                     referencia = estado["referencia"]

@@ -86,7 +86,7 @@ class TransporteWindows:
             self.fechar()
             raise FalhaOperacao(
                 "colagem_incerta" if acao == "colar" else "conexao",
-                "Não foi possível concluir a comunicação com o Chrome.",
+                "Não foi possível concluir a comunicação com o navegador do painel.",
                 "Confira o navegador e o painel. Antes de repetir uma colagem, confira a mensagem.",
             ) from None
 
@@ -101,7 +101,19 @@ class TransporteWindows:
 
 
 ESTADOS = {
-    "ausente": ("nao_aberto", "Aba não localizada. Abra o site no Chrome."),
+    "painel_nao_identificado": (
+        "verificar",
+        "Navegador do painel ainda não identificado. Deixe esta aba visível. "
+        "Se persistir, os controles do navegador precisam ser verificados.",
+    ),
+    "painel_ambiguo": (
+        "verificar",
+        "Há mais de um painel aberto. Deixe visível o painel que será usado.",
+    ),
+    "ausente": (
+        "nao_aberto",
+        "Aba não localizada no navegador deste painel. Abra o site nesse navegador.",
+    ),
     "duplicada": ("verificar", "Há mais de uma aba deste sistema. Deixe apenas a que será usada."),
     "localizada": ("disponivel", "Aba localizada. O login será conferido ao acessar a página."),
     "login": ("login", "Faça login no próprio site e mantenha essa aba aberta."),
@@ -113,7 +125,7 @@ ESTADOS = {
     ),
     "erro": (
         "indisponivel",
-        "Não foi possível verificar o navegador. Confira se o Chrome está aberto.",
+        "Não foi possível verificar o navegador deste painel. Volte à aba do painel e aguarde.",
     ),
 }
 
@@ -234,7 +246,7 @@ class NavegadorDesktop:
             raise FalhaOperacao(
                 "conexao",
                 "Não foi possível localizar uma única aba do SIAT.",
-                "Abra o SIAT no Chrome e deixe somente uma aba desse sistema.",
+                "Abra o SIAT no mesmo navegador deste painel e deixe uma única aba desse sistema.",
             )
         avisar(
             "Vou trazer o SIAT para frente. Aguarde sem usar mouse ou teclado durante a consulta."

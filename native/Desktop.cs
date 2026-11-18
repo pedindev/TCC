@@ -12,6 +12,8 @@ public static class MvpDesktop
 {
     public static int ProcessoTeste = 0; // Exclusivamente o PID criado pelo teste isolado.
     static long limite;
+    static int navegadorPainel;
+    static long inicioNavegadorPainel;
     static string referenciaAtual;
     static IntPtr janelaAtual;
     static Aba painelOrigem;
@@ -90,25 +92,70 @@ public static class MvpDesktop
         if (fila.Count > 0) throw new InvalidOperationException();
         return resultado;
     }
-    static List<Aba> Abas() {
+    static List<Aba> AbasDaJanela(AutomationElement janela) {
         var lista = new List<Aba>();
-        var janelas = AutomationElement.RootElement.FindAll(TreeScope.Children,
-            new PropertyCondition(AutomationElement.ClassNameProperty, "Chrome_WidgetWin_1"));
+        foreach (var tab in Moldura(janela, ControlType.TabItem)) {
+            string nome = tab.Current.Name;
+            nome = Regex.Replace(nome,@"^(?:Uso da memória em |Memory usage (?:in|for) )","",RegexOptions.IgnoreCase);
+            string sistema = Regex.IsMatch(nome, @"^SIAT(?:\s|[-–])", RegexOptions.IgnoreCase) ? "siat"
+                : Regex.IsMatch(nome, @"^(?:\(\d+\)\s*)?WhatsApp(?:\s|:|$)", RegexOptions.IgnoreCase) ? "whatsapp"
+                : Regex.IsMatch(nome, @"^Painel\s*•\s*MVP(?:\s|:|$)",RegexOptions.IgnoreCase) ? "painel" : null;
+            if (sistema != null) lista.Add(new Aba { tab=tab, janela=janela, sistema=sistema,
+                referencia=janela.Current.NativeWindowHandle.ToString()+":"+Identidade(tab) });
+        }
+        return lista;
+    }
+    static List<Aba> Abas() {
+        // A lista de janelas pode mudar enquanto o Windows atualiza a árvore UIA.
+        // Repetir somente a observação; nenhuma ação de consulta/colagem é refeita.
+        for (int tentativa=0; tentativa<3; tentativa++) {
+            Prazo();
+            try { return ListarAbas(); }
+            catch (ElementNotAvailableException) { Thread.Sleep(50); }
+        }
+        throw new InvalidOperationException("painel_nao_identificado");
+    }
+    static List<Aba> ListarAbas() {
+        var lista = new List<Aba>();
+        var janelas = AutomationElement.RootElement.FindAll(TreeScope.Children,Condition.TrueCondition);
+        if (navegadorPainel!=0) {
+            try {
+                if (Process.GetProcessById(navegadorPainel).StartTime.ToUniversalTime().Ticks!=inicioNavegadorPainel)
+                    navegadorPainel=0;
+            } catch { navegadorPainel=0; }
+        }
+        if (navegadorPainel==0) {
+            // Descobrir o processo pela aba local visível, nunca pela marca do navegador.
+            var candidatos=new List<Aba>();
+            foreach (AutomationElement janela in janelas) {
+                Prazo();
+                if (ProcessoTeste>0 && janela.Current.ProcessId!=ProcessoTeste) continue;
+                if (!Regex.IsMatch(janela.Current.Name,@"Painel\s*•\s*MVP",RegexOptions.IgnoreCase)) continue;
+                try {
+                    foreach (var aba in AbasDaJanela(janela)) if (aba.sistema=="painel" && Selecionada(aba.tab)) {
+                        Endereco(aba); candidatos.Add(aba);
+                    }
+                } catch (InvalidOperationException) { }
+            }
+            var ativos=candidatos.FindAll(delegate(Aba a) {
+                return GetForegroundWindow()==(IntPtr)a.janela.Current.NativeWindowHandle;
+            });
+            if (ativos.Count==1) candidatos=ativos;
+            if (candidatos.Count!=1) throw new InvalidOperationException(
+                candidatos.Count>1 ? "painel_ambiguo" : "painel_nao_identificado");
+            navegadorPainel=candidatos[0].janela.Current.ProcessId;
+            inicioNavegadorPainel=Process.GetProcessById(navegadorPainel).StartTime.ToUniversalTime().Ticks;
+        }
+        // Outras janelas do mesmo processo são aceitas; outros navegadores não entram.
         foreach (AutomationElement janela in janelas) {
             Prazo();
-            int pid = janela.Current.ProcessId;
-            if (ProcessoTeste > 0 && pid != ProcessoTeste) continue;
-            string processo = Process.GetProcessById(pid).ProcessName.ToLowerInvariant();
-            if (processo != "chrome" && processo != "brave") continue;
-            foreach (var tab in Moldura(janela, ControlType.TabItem)) {
-                string nome = tab.Current.Name;
-                nome = Regex.Replace(nome,@"^(?:Uso da memória em |Memory usage (?:in|for) )","",RegexOptions.IgnoreCase);
-                string sistema = Regex.IsMatch(nome, @"^SIAT(?:\s|[-–])", RegexOptions.IgnoreCase) ? "siat"
-                    : Regex.IsMatch(nome, @"^(?:\(\d+\)\s*)?WhatsApp(?:\s|:|$)", RegexOptions.IgnoreCase) ? "whatsapp"
-                    : Regex.IsMatch(nome, @"^Painel\s*•\s*MVP(?:\s|:|$)",RegexOptions.IgnoreCase) ? "painel" : null;
-                if (sistema != null) lista.Add(new Aba { tab=tab, janela=janela, sistema=sistema,
-                    referencia=janela.Current.NativeWindowHandle.ToString()+":"+Identidade(tab) });
-            }
+            if (janela.Current.ProcessId!=navegadorPainel) continue;
+            if (ProcessoTeste>0 && janela.Current.ProcessId!=ProcessoTeste) continue;
+            lista.AddRange(AbasDaJanela(janela));
+        }
+        if (!lista.Exists(delegate(Aba a) {return a.sistema=="painel";})) {
+            navegadorPainel=0;
+            throw new InvalidOperationException("painel_nao_identificado");
         }
         return lista;
     }
@@ -123,12 +170,17 @@ public static class MvpDesktop
     }
     static Uri Endereco(Aba aba) {
         AutomationElement barra = null;
-        foreach (var e in Moldura(aba.janela, ControlType.Edit)) {
-            string nome = e.Current.Name;
-            if (nome == "Address and search bar" || nome == "Barra de endereço e pesquisa"
-                || nome == "Barra de endereços e pesquisa" || nome == "Barra de endereço e de pesquisa") {
-                if (barra != null) throw new InvalidOperationException(); barra = e;
+        foreach (var tipo in new [] {ControlType.Edit,ControlType.ComboBox}) {
+            foreach (var e in Moldura(aba.janela, tipo)) {
+                string rotulo=e.Current.Name+" "+e.Current.AutomationId;
+                object p;
+                if (!e.Current.IsPassword && Regex.IsMatch(rotulo,@"endere[çc]o|address|urlbar|omnibox",RegexOptions.IgnoreCase)
+                    && e.TryGetCurrentPattern(ValuePattern.Pattern,out p)) {
+                    if (barra!=null) throw new InvalidOperationException();
+                    barra=e;
+                }
             }
+            if (barra!=null) break;
         }
         if (barra == null) throw new InvalidOperationException();
         string valor = ((ValuePattern)barra.GetCurrentPattern(ValuePattern.Pattern)).Current.Value;
@@ -138,7 +190,7 @@ public static class MvpDesktop
         Uri url; if (!Uri.TryCreate(valor, UriKind.Absolute, out url)) throw new InvalidOperationException();
         if (aba.sistema=="painel") {
             if (url.Scheme!="http" || (url.Host!="127.0.0.1" && url.Host!="localhost")
-                || url.Port!=8000 || (url.AbsolutePath!="/" && url.AbsolutePath!="/painel/")
+                || (url.Port!=8000 && ProcessoTeste==0) || (url.AbsolutePath!="/" && url.AbsolutePath!="/painel/")
                 || url.UserInfo!="")
                 throw new InvalidOperationException();
             return url;
@@ -677,7 +729,15 @@ public static class MvpDesktop
             if (acao == "sair") return Resposta(Sair(aba));
             return Resposta("falha");
         } catch (TimeoutException) { return Resposta("demora"); }
-        catch (InvalidOperationException erro) { return Erro(erro,erro.Message=="foco" ? "foco" : "falha"); }
+        catch (InvalidOperationException erro) {
+            if (acao=="status" && (erro.Message=="painel_nao_identificado" || erro.Message=="painel_ambiguo")) {
+                var estados=new Dictionary<string,object>();
+                foreach (string nome in new [] {"siat","whatsapp"})
+                    estados[nome]=new Dictionary<string,object> {{"estado",erro.Message},{"referencia",""}};
+                return estados;
+            }
+            return Erro(erro,erro.Message=="foco" ? "foco" : "falha");
+        }
         catch (Exception erro) { return Erro(erro,acao=="colar" ? "incerto" : "falha"); }
     }
 }

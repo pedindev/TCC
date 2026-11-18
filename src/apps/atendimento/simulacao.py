@@ -18,6 +18,11 @@ CENARIOS = {
     "TESTE-CONEXAO": "",
     "TESTE-DEMORA": "",
 }
+TEXTO_TESTE_COM = (
+    "SIMULAÇÃO COM DADOS FICTÍCIOS\n\n"
+    "Sua encomenda foi retida porque a fiscalização identificou indícios de que "
+    "os produtos foram comprados para revenda."
+)
 SIAT_URL = "https://webas.sefaz.pi.gov.br/siatweb/faces/index.xhtml"
 LOGIN_URL = "https://webas.sefaz.pi.gov.br/siatweb/faces/login.xhtml"
 WHATSAPP_URL = "https://web.whatsapp.com/"
